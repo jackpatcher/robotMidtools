@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เครื่องมือเวลา</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.6.14/dist/vuetify.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.6.14/dist/vuetify.js"></script>
+  <style>
+    .fixed-number {
+      font-family: 'Roboto Mono', monospace;
+      letter-spacing: 0.05em;
+
+    }
+    .fullscreen-time {
+      font-size:  25vh !important;
+      line-height: 1;
+      text-align: center;
+      margin-top:200px;
+      margin-bottom:50px;
+    }
+    .grid-cell {
+      aspect-ratio: 1/1;  /* Each cell is a perfect square */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2rem;
+      font-weight: bold;
+      height: 100%;  /* Ensure full height within the row */
+    }
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);  /* 8 equal columns */
+      grid-template-rows: repeat(4, 1fr);     /* 4 equal rows */
+      gap: 4px;
+      height: 20vh;  /* Set a fixed height to maintain aspect ratio */
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <v-app>
+      <v-app-bar app color="primary" dark>
+        <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
+        <v-toolbar-title>เครื่องมือจับเวลา</v-toolbar-title>
+        <v-spacer></v-spacer> จิรัฎฐ์ สุดใจ :
+        iam.geradt@gmail.com
+        <v-btn icon @click="toggleFullscreen">
+          <v-icon>mdi-fullscreen</v-icon>
+        </v-btn>
+      </v-app-bar>
+
+      <v-navigation-drawer 
+        v-model="drawer" 
+        app 
+        :mobile-breakpoint="600" 
+        :width="250"
+      >
+        <v-list nav>
+          <v-list-item-group v-model="tab" color="primary">
+            <v-list-item @click="tab = 0">
+              <v-list-item-icon>
+                <v-icon>mdi-grid</v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title>สุ่มตัวเลข</v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+
+            <v-list-item @click="tab = 1">
+              <v-list-item-icon>
+                <v-icon>mdi-timer</v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title>จับเวลา</v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+
+            <v-list-item @click="tab = 2">
+              <v-list-item-icon>
+                <v-icon>mdi-countdown</v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title>นับถอยหลัง</v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list-item-group>
+        </v-list>
+      </v-navigation-drawer>
+
+      <v-main>
+        <v-container fluid>
+          <!-- สุ่มตัวเลข -->
+          <v-sheet v-if="tab === 0" class="pa-4">
+            <v-row justify="center" class="mb-4">
+              <v-col cols="12" class="d-flex justify-center align-center">
+                <v-btn 
+                  color="primary" 
+                  @click="startRandom" 
+                  :disabled="isRandomRunning"
+                  large
+                >
+                  เริ่มสุ่ม
+                </v-btn>
+                <v-slider
+                  v-model="randomSpeed"
+                  label="ความเร็ว"
+                  :min="100"
+                  :max="1000"
+                  :step="100"
+                  class="ml-4"
+                  style="max-width: 300px;"
+                ></v-slider>
+              </v-col>
+            </v-row>
+
+            <div class="grid-container">
+              <v-card 
+                v-for="cell in grid" 
+                :key="cell"
+                :color="getCellColor(cell)"
+                class="grid-cell"
+                :class="{'elevation-4': current === cell || highlighted === cell}"
+              >
+                {{ cell }}
+              </v-card>
+            </div>
+
+            <v-dialog v-model="dialog" max-width="500">
+              <v-card>
+                <v-card-title class="headline green--text">
+                  ยินดีด้วย!
+                </v-card-title>
+                <v-card-text class="text-center">
+                  <div class="display-1 red--text font-weight-bold">
+                    {{ highlighted }}
+                  </div>
+                </v-card-text>
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn color="primary" @click="dialog = false">
+                    ปิด
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
+          </v-sheet>
+
+          <!-- จับเวลา -->
+          <v-sheet v-if="tab === 1" class="d-flex flex-column align-center justify-center fill-height pa-4">
+            <div class="text-center">
+              <div v-if="fullscreenText" class="mb-2 grey--text text--darken-1">
+                {{ fullscreenText }}
+              </div>
+              <div :class="['fixed-number', isFullScreen ? 'fullscreen-time' : 'display-3']">
+                {{ formattedTime }}
+              </div>
+              <v-btn-group>
+                <v-btn 
+                  color="green" 
+                  @click="toggleTimer"
+                >
+                  {{ timerRunning ? 'หยุด' : 'เริ่ม' }}
+                </v-btn>
+                <v-btn 
+                  color="red" 
+                  @click="resetTimer"
+                >
+                  รีเซ็ต
+                </v-btn>
+              </v-btn-group>
+              <v-text-field
+                v-if="!isFullScreen"
+                v-model="fullscreenText"
+                label="ใส่ข้อความ"
+                class="mt-4"
+              ></v-text-field>
+                  <p class="font-weight-thin" style="margin-top:20px">
+   กด  ENTER  เพื่อเริ่ม หรือ หยุด     <br>กด  0 เพื่อ รีเซ็ต
+     </p>
+
+    </p>
+            </div>
+          </v-sheet>
+
+          <!-- นับถอยหลัง -->
+          <v-sheet v-if="tab === 2" class="d-flex flex-column align-center justify-center fill-height pa-4">
+            <div class="text-center">
+              <div v-if="fullscreenText2" class="mb-2 grey--text text--darken-1">
+                {{ fullscreenText2 }}
+              </div>
+              <div :class="['fixed-number', isFullScreen ? 'fullscreen-time' : 'display-3']">
+                {{ countdownTime }}
+              </div>
+              <v-btn-group>
+                <v-btn 
+                  color="green" 
+                  @click="startCountdown(30 * 60+5)"
+                >
+                  30 นาที
+                </v-btn>
+                <v-btn 
+                  color="blue" 
+                  @click="startCountdown(60 * 60 * 3+5)"
+                >
+                  3 ชั่วโมง
+                </v-btn>
+                <v-btn 
+                  color="red" 
+                  @click="resetCountdown"
+                >
+                  รีเซ็ต
+                </v-btn>
+              </v-btn-group>
+              <v-text-field
+                v-if="!isFullScreen"
+                v-model="fullscreenText2"
+                label="ใส่ข้อความ"
+                class="mt-4"
+              ></v-text-field>
+            </div>
+          </v-sheet>
+        </v-container>
+      </v-main>
+    </v-app>
+  </div>
+
+  <script>
+    new Vue({
+      el: '#app',
+      vuetify: new Vuetify(),
+      data() {
+        return {
+          drawer: true,
+          tab: 0,
+          grid: Array.from({ length: 32 }, (_, i) => i + 1),
+          current: null,
+          highlighted: null,
+          timer: null,
+          dialog: false,
+          isRandomRunning: false,
+          randomSpeed: 500,
+          timerRunning: false,
+          time: 0,
+          fullscreenText: "",
+          fullscreenText2: "",
+          isFullScreen: false,
+          countdown: null,
+          countdownValue: 0
+        };
+      },
+      computed: {
+        formattedTime() {
+          const minutes = String(Math.floor(this.time / 6000)).padStart(2, "0");
+          const seconds = String(Math.floor((this.time % 6000) / 100)).padStart(2, "0");
+          const milliseconds = String(this.time % 100).padStart(2, "0");
+          return `${minutes}:${seconds}:${milliseconds}`;
+        },
+        countdownTime() {
+          const hours = String(Math.floor(this.countdownValue / 3600)).padStart(2, "0");
+          const minutes = String(Math.floor((this.countdownValue % 3600) / 60)).padStart(2, "0");
+          const seconds = String(this.countdownValue % 60).padStart(2, "0");
+          return `${hours}:${minutes}:${seconds}`;
+        }
+      },
+      methods: {
+        getCellColor(cell) {
+          if (this.highlighted === cell) return 'red lighten-2';
+          if (this.current === cell) return 'yellow lighten-2';
+          return 'grey lighten-3';
+        },
+        startRandom() {
+          if (this.timer) clearInterval(this.timer);
+          
+          this.isRandomRunning = true;
+          
+          let shuffled = [...this.grid].sort(() => Math.random() - 0.5);
+          let index = 0;
+          
+          this.timer = setInterval(() => {
+            this.current = shuffled[index];
+            index++;
+            
+            if (index >= shuffled.length) {
+              clearInterval(this.timer);
+              this.highlighted = this.current;
+              this.current = null;
+              this.dialog = true;
+              this.isRandomRunning = false;
+              return;
+            } else if (index > shuffled.length - 5) {
+              clearInterval(this.timer);
+              this.timer = setInterval(() => {
+                this.current = shuffled[index];
+                index++;
+                
+                if (index >= shuffled.length) {
+                  clearInterval(this.timer);
+                  this.highlighted = this.current;
+                  this.current = null;
+                  this.dialog = true;
+                  this.isRandomRunning = false;
+                }
+              }, 200);
+            }
+          }, this.randomSpeed);
+        },
+        toggleTimer() {
+          if (this.timerRunning) {
+            clearInterval(this.timer);
+          } else {
+            this.timer = setInterval(() => {
+              this.time++;
+            }, 10);
+          }
+          this.timerRunning = !this.timerRunning;
+        },
+        resetTimer() {
+          clearInterval(this.timer);
+          this.time = 0;
+          this.timerRunning = false;
+        },
+        toggleFullscreen() {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+            this.isFullScreen = true;
+          } else {
+            document.exitFullscreen();
+            this.isFullScreen = false;
+          }
+        },
+        startCountdown(seconds) {
+          if (this.countdown) clearInterval(this.countdown);
+          this.countdownValue = seconds;
+          this.countdown = setInterval(() => {
+            if (this.countdownValue > 0) {
+              this.countdownValue--;
+            } else {
+              clearInterval(this.countdown);
+            }
+          }, 1000);
+        },
+        resetCountdown() {
+          clearInterval(this.countdown);
+          this.countdownValue = 0;
+        }
+      },
+      mounted() {
+        window.addEventListener("keydown", (e) => {
+          if (this.tab === 1) {
+            if (e.code === "NumpadEnter") {
+              e.preventDefault();
+              this.toggleTimer();
+            } else if (e.code === "Numpad0") {
+              this.resetTimer();
+            } else if (e.code === "NumpadAdd") {
+              this.toggleFullscreen();
+            }
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
