@@ -3,7 +3,11 @@ const urlsToCache = [
   './robotTools.html',
   './script.js',
   './icon-192.png',
-  './icon-512.png'
+  './icon-512.png',
+  './vue.js',
+  './vuetify.js',
+  './vuetify.min.css',
+  './materialdesignicons.min.css',
 ];
 
 self.addEventListener('install', event => {
