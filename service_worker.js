@@ -1,9 +1,9 @@
 const CACHE_NAME = 'botTools-cache-v1';
 const urlsToCache = [
-  '/robotTools.html',
-  '/script.js',
-  '/icon-192.png',
-  '/icon-512.png'
+  './robotTools.html',
+  './script.js',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 self.addEventListener('install', event => {
