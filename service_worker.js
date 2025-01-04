@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pwa-demo-cache-v1';
+const CACHE_NAME = 'botTools-cache-v1';
 const urlsToCache = [
   '/robotTools.html',
   '/script.js',
