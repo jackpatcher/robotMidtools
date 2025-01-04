@@ -1,7 +1,7 @@
 {
   "name": "PWA Demo",
   "short_name": "PWA",
-  "start_url": "/robotMidtools.html",
+  "start_url": "/robotTools.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0000ff",
