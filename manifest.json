@@ -1,6 +1,6 @@
 {
-  "name": "PWA Demo",
-  "short_name": "PWA",
+  "name": "RobotTools by Geradt",
+  "short_name": "botTools",
   "start_url": "/robotTools.html",
   "display": "standalone",
   "background_color": "#ffffff",
